@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -126,6 +127,7 @@ model AIRecommendation {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, bookId])
   @@index([userId])
   @@index([score])
   @@map("ai_recommendations")

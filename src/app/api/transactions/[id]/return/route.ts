@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from 'next-auth'
 import { db } from '@/lib/db'
 import { UserRole } from '@prisma/client'
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions)
+    const { id } = await params
+    const session = await auth()
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const notes = body.notes
 
     const transaction = await db.transaction.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { book: true },
     })
 
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     const [updatedTransaction] = await db.$transaction([
       db.transaction.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           status: 'RETURNED',
           returnDate: new Date(),

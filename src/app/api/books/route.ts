@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getSession } from '@/lib/session'
 import { db } from '@/lib/db'
 import { createBookSchema, searchBooksSchema } from '@/lib/validations'
-import { UserRole } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -71,9 +69,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getSession()
 
-    if (!session?.user || (session.user.role !== UserRole.LIBRARIAN && session.user.role !== UserRole.ADMIN)) {
+    if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

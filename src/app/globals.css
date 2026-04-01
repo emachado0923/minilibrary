@@ -128,3 +128,48 @@
     @apply font-sans;
   }
 }
+
+/* DataTables custom styling for dark mode */
+.dataTables_wrapper {
+  @apply text-foreground;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+  @apply text-foreground;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  @apply bg-background border-border text-foreground px-3 py-2 rounded-md;
+}
+
+.dataTables_wrapper .dataTables_length select {
+  @apply bg-background border-border text-foreground px-3 py-2 rounded-md;
+}
+
+.dataTables_wrapper table.dataTable {
+  @apply text-foreground;
+}
+
+.dataTables_wrapper table.dataTable thead th {
+  @apply bg-muted text-foreground border-border;
+}
+
+.dataTables_wrapper table.dataTable tbody tr {
+  @apply border-border;
+}
+
+.dataTables_wrapper table.dataTable tbody tr:hover {
+  @apply bg-muted/50;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  @apply text-foreground;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  @apply bg-primary text-primary-foreground border-primary;
+}

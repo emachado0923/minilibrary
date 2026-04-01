@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getSession } from '@/lib/session'
 import { db } from '@/lib/db'
 import { updateBookSchema } from '@/lib/validations'
-import { UserRole } from '@prisma/client'
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const book = await db.book.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         transactions: {
           include: {
@@ -33,19 +32,20 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions)
+    const { id } = await params
+    const session = await getSession()
 
-    if (!session?.user || (session.user.role !== UserRole.LIBRARIAN && session.user.role !== UserRole.ADMIN)) {
+    if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
-    const validated = updateBookSchema.parse({ ...body, id: params.id })
+    const validated = updateBookSchema.parse({ ...body, id })
 
     const existingBook = await db.book.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         transactions: {
           where: { status: 'ACTIVE' },
@@ -67,10 +67,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       )
     }
 
-    const { id, ...updateData } = validated
+    const { id: validatedId, ...updateData } = validated
 
     const updatedBook = await db.book.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...updateData,
         copiesAvailable: validated.copiesTotal !== undefined 
@@ -86,16 +86,17 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions)
+    const { id } = await params
+    const session = await getSession()
 
-    if (!session?.user || (session.user.role !== UserRole.LIBRARIAN && session.user.role !== UserRole.ADMIN)) {
+    if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const book = await db.book.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         transactions: {
           where: { status: 'ACTIVE' },
@@ -115,7 +116,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     await db.book.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: 'Book deleted successfully' })

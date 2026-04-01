@@ -1,6 +1,6 @@
 import { PrismaClient, UserRole } from '@prisma/client'
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient({})
 
 const categories = [
   'Fiction', 'Non-Fiction', 'Science Fiction', 'Fantasy', 'Mystery', 'Thriller',

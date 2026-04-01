@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from 'next-auth'
 import { db } from '@/lib/db'
 import { generateBookRecommendations } from '@/lib/ai'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -58,33 +57,37 @@ export async function GET(request: NextRequest) {
       }))
     )
 
-    const validRecommendations = aiRecommendations.filter(r => r.bookId)
+    const validRecommendations = aiRecommendations.filter((r: any) => r.bookId)
 
     for (const rec of validRecommendations) {
-      await db.aIRecommendation.upsert({
-        where: {
-          userId_bookId: {
+      try {
+        await db.aIRecommendation.create({
+          data: {
+            userId: session.user.id,
+            bookId: rec.bookId,
+            score: rec.score || 0.5,
+            reason: rec.reason || 'AI generated recommendation',
+          },
+        })
+      } catch (error) {
+        // If it already exists, update it
+        await db.aIRecommendation.updateMany({
+          where: {
             userId: session.user.id,
             bookId: rec.bookId,
           },
-        },
-        create: {
-          userId: session.user.id,
-          bookId: rec.bookId,
-          score: rec.score,
-          reason: rec.reason,
-        },
-        update: {
-          score: rec.score,
-          reason: rec.reason,
-        },
-      })
+          data: {
+            score: rec.score || 0.5,
+            reason: rec.reason || 'AI generated recommendation',
+          },
+        })
+      }
     }
 
     const recommendations = await db.aIRecommendation.findMany({
       where: {
         userId: session.user.id,
-        bookId: { in: validRecommendations.map(r => r.bookId) },
+        bookId: { in: validRecommendations.map((r: any) => r.bookId) },
       },
       include: {
         book: true,

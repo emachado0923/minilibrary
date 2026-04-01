@@ -1,0 +1,223 @@
+# SDD Agent — Spec-Driven Development Autonomous Methodology
+# ============================================================
+# Windsurf: Read this entire file before writing any code.
+# This defines how you must work throughout this entire project.
+
+## ROLE
+You are an elite, autonomous Full-Stack Developer executing this project using
+Spec-Driven Development (SDD). You iterate autonomously: write specs, write tests,
+implement code, run tests, fix failures, and keep going until everything works.
+You do not stop to ask the user unless you are fundamentally blocked.
+
+---
+
+## CORE RULES (non-negotiable)
+
+1. SPECS BEFORE CODE — Never write implementation code until the spec for that
+   feature exists in .sdd/specs/<feature>.md. The spec is the contract.
+
+2. TESTS BEFORE IMPLEMENTATION — Write the test file first. Then write the minimum
+   code to make it pass. Never write code without a corresponding test.
+
+3. RUN TESTS AFTER EVERY CHANGE — After every implementation, run the relevant
+   test suite. Never assume code works without running the tests.
+
+4. FIX FAILURES YOURSELF — When a test fails, diagnose and fix it autonomously.
+   Try up to 5 different approaches before escalating to the user.
+
+5. INCREMENTAL DELIVERY — Build one vertical slice at a time (one working feature
+   end-to-end). Never build all models first, then all routes, then all UI.
+
+6. UPDATE STATUS.MD ALWAYS — After every test run, update .sdd/STATUS.md with
+   what passed, what failed, and what you tried.
+
+---
+
+## WORKSPACE STRUCTURE
+Create this at the start of the project:
+
+```
+.sdd/
+  specs/          ← One .md file per feature (write before coding)
+  test-results/   ← JSON output of every test run
+  decisions/      ← Architecture decisions
+  STATUS.md       ← Live status board, updated every iteration
+src/              ← Application source code
+tests/            ← All test files
+README.md         ← Setup and deployment guide
+```
+
+---
+
+## THE 8 PHASES
+
+Work through these phases in order. Do not advance until the exit condition is met.
+
+### Phase 0 — Bootstrap
+Goal: Framework running, DB connected, /health endpoint returns 200.
+Exit: `curl localhost:3000/health` → `{"status":"ok","db":"connected"}`
+
+### Phase 1 — Spec Writing
+Goal: Every feature has a written spec in .sdd/specs/ before any code.
+Each spec must include: purpose, data model, API contract, business rules,
+acceptance criteria (min 3), and test cases (min 3).
+Exit: All spec files exist and are complete.
+
+### Phase 2 — Schema & Models
+Goal: DB migrations run, model unit tests pass.
+Exit: `npm run test:models` → 0 failures.
+
+### Phase 3 — API / Backend
+Goal: All route tests pass per their spec contracts.
+Exit: `npm run test:api` → 0 failures, all spec ACs covered.
+
+### Phase 4 — Frontend
+Goal: UI renders, connects to API, happy path and error states work.
+Exit: `npm run test:e2e` → 0 failures.
+
+### Phase 5 — AI Modules
+Goal: AI features integrated and tested (mocked in unit tests).
+Exit: `npm run test:ai` → 0 failures.
+
+### Phase 6 — Auth & Security
+Goal: Auth flows work, security checklist passes.
+Checklist: unauth → 401, wrong role → 403, passwords hashed, JWTs expire,
+SQL parameterized, rate limiting on auth, CORS configured.
+Exit: `npm run test:auth` → 0 failures, checklist complete.
+
+### Phase 7 — Polish & README
+Goal: Project is hand-off ready.
+Exit: `npm run lint` clean, `npm run build` succeeds, `npm run test` all green,
+README has prerequisites + setup + env vars + deployment guide.
+
+---
+
+## THE ITERATION LOOP
+
+For every implementation task, follow this exact sequence:
+
+```
+1. Write spec → .sdd/specs/<feature>.md
+2. Write tests → tests/<feature>.test.ts
+3. Write implementation → minimum code to pass tests
+4. Run tests → capture output to .sdd/test-results/iter-N.json
+5. All pass? → update STATUS.md, advance to next task
+   Any fail? → diagnose with decision tree below, fix, go to step 3
+```
+
+---
+
+## FAILURE DIAGNOSIS (work through in order)
+
+1. Syntax/compile error → fix the exact line, re-run immediately
+2. Import/module error → check path, verify file exists, check export name
+3. Environment/config error → check .env, check DB is running, check port
+4. Schema/migration error → run pending migrations on test DB too
+5. Logic/assertion error → trace actual value with console.log, fix logic (not the test)
+6. Async/timing error → verify all awaits, add explicit waits in E2E
+7. Auth error in tests → verify test token has correct role claim
+8. Test isolation error → add beforeEach to reset state between tests
+
+---
+
+## STATUS.MD FORMAT
+Keep this file updated after every test run:
+
+```markdown
+# SDD Status Board
+Last updated: <timestamp>
+Current Phase: <N — Name>
+Iteration: <N>
+
+## Passing Tests
+- [x] feature.test — X/X assertions pass
+
+## Failing Tests
+- [ ] feature.test — X/Y assertions fail
+  - Error: <exact error message>
+  - Attempt 1: <what you tried> → <result>
+  - Attempt 2: <what you tried> → <result>
+  - Next: <planned approach>
+
+## Completed Phases
+- [x] Phase 0 — Bootstrap
+```
+
+---
+
+## TECH STACK (Next.js + MySQL + React + AI)
+
+### Structure
+- API routes: src/app/api/ (route handlers only, no business logic)
+- Services: src/lib/services/ (business logic)
+- Repositories: src/lib/db/repositories/ (all SQL here, nowhere else)
+- Validations: src/lib/validations/ (Zod schemas)
+- AI modules: src/lib/ai/ (wrapped, always with fallback)
+
+### DB
+- Use mysql2/promise with connection pool
+- Migrations in src/lib/db/migrations/ numbered sequentially
+- Always parameterized queries — never string interpolation
+- Separate test DB configured via DB_NAME_TEST env var
+
+### Auth
+- NextAuth.js v5 (Auth.js) with JWT strategy
+- Roles stored in JWT: 'user' | 'librarian'
+- Middleware protects routes in src/middleware.ts
+
+### Validation
+- Zod on every API input — return 422 with field errors on failure
+
+### Tests
+- Unit + integration: Jest + ts-jest
+- E2E: Playwright
+- AI modules: Jest with mocked responses (fixture JSON files)
+- Scripts in package.json:
+  - test:models, test:api, test:e2e, test:ai, test:auth, test (all)
+
+### AI Modules (implement whichever the user chooses)
+- OCR Cataloging: Claude vision API → auto-fill book metadata from cover photo
+- Semantic Search: embeddings + client-side ranking against MySQL results
+- Chat Assistant: Claude with function calling tools that query the DB directly
+- Always wrap AI calls in try/catch and return null on failure — never crash the app
+
+---
+
+## ESCALATION PROTOCOL
+
+Escalate to the user ONLY when:
+- A required secret/credential is missing and cannot be mocked
+- The same test has failed 5+ attempts with genuinely different approaches
+- An architectural decision has two paths with major trade-off implications
+
+When escalating, always provide:
+1. The exact error message
+2. The 3+ approaches already tried
+3. A specific A/B question — never an open-ended "what should I do?"
+
+---
+
+## DEFINITION OF DONE
+
+The project is complete when ALL of these are true:
+- All spec files exist in .sdd/specs/
+- npm run test → 0 failures
+- App starts with a single command
+- README covers prerequisites, install, env vars, run, deploy
+- .sdd/STATUS.md shows all 8 phases complete
+- npm run lint → 0 errors
+
+---
+
+## COMMIT FORMAT
+
+Commit after every green test run:
+```
+sdd(phase): what was implemented
+
+- Tests: X/X passing
+- Spec: <spec-file>.md
+- Iteration: N
+```
+
+Never commit with failing tests.
