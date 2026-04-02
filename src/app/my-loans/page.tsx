@@ -1,5 +1,6 @@
 import { db } from '@/lib/db'
 import { auth } from '@/lib/auth'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -17,14 +18,27 @@ import { format, isPast } from 'date-fns'
 
 export default async function MyLoansPage() {
   const session = await auth()
-  
-  if (!session?.user?.id) {
+
+  // Fallback: check custom cookie session (used by email/password login)
+  let userId = session?.user?.id
+  if (!userId) {
+    const cookieStore = await cookies()
+    const raw = cookieStore.get('session-user')?.value
+    if (raw) {
+      try {
+        const cookieUser = JSON.parse(raw)
+        userId = cookieUser.id
+      } catch {}
+    }
+  }
+
+  if (!userId) {
     redirect('/login')
   }
 
   const transactions = await db.transaction.findMany({
     where: {
-      userId: session.user.id,
+      userId: userId,
       status: { in: ['ACTIVE', 'OVERDUE'] },
     },
     include: {
@@ -53,6 +67,7 @@ export default async function MyLoansPage() {
                 <Link href="/books" className={buttonVariants()}>Browse Books</Link>
               </div>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -94,6 +109,7 @@ export default async function MyLoansPage() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
