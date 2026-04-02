@@ -172,6 +172,7 @@ export default async function AdminPage() {
             <CardDescription>Latest checkout and return activities</CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -212,6 +213,7 @@ export default async function AdminPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
