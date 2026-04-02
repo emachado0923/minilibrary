@@ -5,9 +5,8 @@ import { usePathname } from 'next/navigation'
 import { ThemeToggle } from '@/components/theme-toggle'
 import {
   Home, Library, BookOpen, Bot, Sparkles, Settings, LogOut,
-  ChevronLeft, ChevronRight, BarChart3
+  ChevronLeft, ChevronRight, BarChart3, X,
 } from 'lucide-react'
-import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 
 const navItems = [
@@ -19,36 +18,60 @@ const navItems = [
   { href: '/admin', label: 'Admin Panel', icon: BarChart3 },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  collapsed: boolean
+  setCollapsed: (v: boolean) => void
+  mobileOpen: boolean
+  setMobileOpen: (v: boolean) => void
+}
+
+export function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: SidebarProps) {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-40 h-screen border-r bg-card transition-all duration-300 flex flex-col ${
-        collapsed ? 'w-16' : 'w-64'
-      }`}
+      className={`
+        fixed left-0 top-0 z-40 h-screen border-r bg-card flex flex-col
+        transition-all duration-300
+        ${collapsed ? 'w-16' : 'w-64'}
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0
+      `}
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b px-4">
+      <div className="flex h-16 items-center justify-between border-b px-4 shrink-0">
         {!collapsed && (
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-            <Library className="h-6 w-6 text-primary" />
+          <Link href="/" className="flex items-center gap-2 font-bold text-lg" onClick={() => setMobileOpen(false)}>
+            <Library className="h-6 w-6 text-primary shrink-0" />
             <span>LibraryOS</span>
           </Link>
         )}
         {collapsed && (
-          <Link href="/" className="mx-auto">
+          <Link href="/" className="mx-auto" onClick={() => setMobileOpen(false)}>
             <Library className="h-6 w-6 text-primary" />
           </Link>
         )}
+
+        {/* Desktop collapse button */}
+        {!collapsed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 hidden lg:flex"
+            onClick={() => setCollapsed(true)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        )}
+
+        {/* Mobile close button */}
         <Button
           variant="ghost"
           size="icon"
-          className={`h-8 w-8 ${collapsed ? 'hidden' : ''}`}
-          onClick={() => setCollapsed(!collapsed)}
+          className="h-8 w-8 lg:hidden"
+          onClick={() => setMobileOpen(false)}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <X className="h-4 w-4" />
         </Button>
       </div>
 
@@ -61,6 +84,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
                 isActive
                   ? 'bg-primary text-primary-foreground shadow-sm'
@@ -68,7 +92,7 @@ export function Sidebar() {
               } ${collapsed ? 'justify-center px-2' : ''}`}
               title={collapsed ? item.label : undefined}
             >
-              <Icon className="h-4 w-4 flex-shrink-0" />
+              <Icon className="h-4 w-4 shrink-0" />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           )
@@ -76,7 +100,7 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t p-3 space-y-1">
+      <div className="border-t p-3 space-y-1 shrink-0">
         <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
           {!collapsed && <span className="text-xs text-muted-foreground">Theme</span>}
           <ThemeToggle />
@@ -86,7 +110,7 @@ export function Sidebar() {
           <Button
             variant="ghost"
             size="icon"
-            className="w-full h-8"
+            className="w-full h-8 hidden lg:flex"
             onClick={() => setCollapsed(false)}
           >
             <ChevronRight className="h-4 w-4" />
@@ -95,25 +119,15 @@ export function Sidebar() {
 
         <Link
           href="/login"
+          onClick={() => setMobileOpen(false)}
           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all ${
             collapsed ? 'justify-center px-2' : ''
           }`}
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-4 w-4 shrink-0" />
           {!collapsed && <span>Sign Out</span>}
         </Link>
       </div>
     </aside>
-  )
-}
-
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <main className="pl-64 min-h-screen transition-all duration-300">
-        <div className="p-6">{children}</div>
-      </main>
-    </div>
   )
 }
