@@ -42,6 +42,8 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=builder /app/public             ./public
 COPY --from=builder /app/.next/standalone   ./
 COPY --from=builder /app/.next/static       ./.next/static
+# Remove any .env baked in by Next.js standalone — env vars come from Docker at runtime
+RUN rm -f /app/.env /app/.env.*
 
 # Prisma generated client (used by the app at runtime)
 COPY --from=builder /app/prisma             ./prisma

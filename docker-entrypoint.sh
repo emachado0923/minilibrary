@@ -1,30 +1,37 @@
 #!/bin/sh
 set -e
 
-# ── Load .env if present (runtime env vars take precedence) ──────────────────
-if [ -f /app/.env ]; then
-  set -a
-  . /app/.env
-  set +a
-fi
-
 PRISMA="node /app/node_modules/prisma/build/index.js"
 TSX="/app/node_modules/.bin/tsx"
 
-# ── Wait for MySQL ────────────────────────────────────────────────────────────
-DB_HOSTPORT=$(echo "$DATABASE_URL" | sed 's|.*@||' | cut -d/ -f1)
-DB_HOST=$(echo "$DB_HOSTPORT" | cut -d: -f1)
-DB_PORT=$(echo "$DB_HOSTPORT" | cut -d: -f2)
+# ── Extract host and port from DATABASE_URL ───────────────────────────────────
+# Handles both mysql://user:pass@host:port/db and postgresql://user:pass@host/db
+AFTER_AT=$(echo "$DATABASE_URL" | sed 's|.*@||')           # host:port/db or host/db
+HOSTPART=$(echo "$AFTER_AT" | cut -d/ -f1)                 # host:port or host
+DB_HOST=$(echo "$HOSTPART" | cut -d: -f1)                  # host
+DB_PORT_RAW=$(echo "$HOSTPART" | grep -o ':[0-9]*' | tr -d ':')  # port or empty
 
-echo "Waiting for MySQL at $DB_HOST:$DB_PORT..."
+# Default to 5432 for PostgreSQL, 3306 for MySQL if no port in URL
+if [ -z "$DB_PORT_RAW" ]; then
+  case "$DATABASE_URL" in
+    postgres*) DB_PORT=5432 ;;
+    mysql*)    DB_PORT=3306 ;;
+    *)         DB_PORT=5432 ;;
+  esac
+else
+  DB_PORT="$DB_PORT_RAW"
+fi
+
+# ── Wait for DB ───────────────────────────────────────────────────────────────
+echo "Waiting for DB at $DB_HOST:$DB_PORT..."
 until nc -z -w 3 "$DB_HOST" "$DB_PORT" > /dev/null 2>&1; do
   sleep 2
 done
-echo "MySQL is up"
+echo "DB is up"
 
 # ── Push schema ───────────────────────────────────────────────────────────────
 echo "Pushing Prisma schema..."
-$PRISMA db push --accept-data-loss --skip-generate
+$PRISMA db push --force-reset --skip-generate
 echo "Schema applied"
 
 # ── Seed if empty ─────────────────────────────────────────────────────────────

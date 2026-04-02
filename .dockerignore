@@ -6,6 +6,10 @@ npm-debug.log*
 .next
 out
 
+# Environment files — injected at runtime via --env-file, never baked into image
+.env
+.env.*
+
 # Git
 .git
 .gitignore
