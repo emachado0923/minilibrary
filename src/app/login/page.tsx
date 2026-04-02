@@ -58,7 +58,7 @@ export default function LoginPage() {
       router.push('/')
       router.refresh()
     } catch {
-      setError('Error de conexión. Intenta de nuevo.')
+      setError('Connection error. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -83,14 +83,14 @@ export default function LoginPage() {
             <Library className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white">LibraryOS</h1>
-          <p className="text-blue-200/70">Sistema de Gestión de Biblioteca</p>
+          <p className="text-blue-200/70">Library Management System</p>
         </div>
 
         <Card className="border-white/10 bg-white/5 backdrop-blur-md shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-white">Iniciar Sesión</CardTitle>
+            <CardTitle className="text-white">Sign In</CardTitle>
             <CardDescription className="text-blue-200/60">
-              Accede con tu cuenta de Google, GitHub o con tu email
+              Sign in with your Google, GitHub or email account
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -132,7 +132,7 @@ export default function LoginPage() {
                 <span className="w-full border-t border-white/10" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="px-3 bg-transparent text-blue-200/50">o continúa con email</span>
+                <span className="px-3 bg-transparent text-blue-200/50">or continue with email</span>
               </div>
             </div>
 
@@ -146,7 +146,7 @@ export default function LoginPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-blue-100">Email</Label>
+                <Label htmlFor="email" className="text-blue-100">Email address</Label>
                 <Input
                   id="email"
                   type="email"
@@ -159,7 +159,7 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-blue-100">Contraseña</Label>
+                <Label htmlFor="password" className="text-blue-100">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -175,17 +175,17 @@ export default function LoginPage() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Verificando...
+                    Verifying...
                   </>
                 ) : (
-                  'Ingresar'
+                  'Sign In'
                 )}
               </Button>
             </form>
 
             {/* Quick access */}
             <div className="pt-2 border-t border-white/10">
-              <p className="text-xs text-blue-200/50 mb-3 text-center">Acceso rápido de prueba:</p>
+              <p className="text-xs text-blue-200/50 mb-3 text-center">Quick test access:</p>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
