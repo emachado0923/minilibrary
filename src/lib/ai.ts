@@ -1,9 +1,11 @@
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
-})
+function getOpenAI() {
+  return new OpenAI({
+    apiKey: process.env.OPENROUTER_API_KEY ?? 'no-key',
+    baseURL: 'https://openrouter.ai/api/v1',
+  })
+}
 
 export async function generateBookRecommendations(
   userHistory: Array<{ title: string; author: string; category: string }>,
@@ -27,7 +29,7 @@ Return a JSON array with this structure:
 
 Only return the JSON array, no other text.`
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {

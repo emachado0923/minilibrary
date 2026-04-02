@@ -176,7 +176,7 @@ export function NewBookForm() {
               <Label htmlFor="category">Categoría *</Label>
               <Select
                 value={formData.category}
-                onValueChange={(value) => handleChange('category', value)}
+                onValueChange={(value) => handleChange('category', value ?? '')}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona una categoría" />

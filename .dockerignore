@@ -6,11 +6,6 @@ npm-debug.log*
 .next
 out
 
-# Environment files
-.env
-.env.*
-!.env.example
-
 # Git
 .git
 .gitignore
@@ -25,15 +20,13 @@ out
 .DS_Store
 Thumbs.db
 
-# Docker
+# Docker meta files
 Dockerfile
 docker-compose.yml
-docker-entrypoint.sh
 .dockerignore
 
 # Misc
 *.md
-DEPLOYMENT.md
 scripts/
 seed-simple.sql
 .windsurf/

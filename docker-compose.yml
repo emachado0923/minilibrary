@@ -1,52 +1,9 @@
 services:
-  db:
-    image: mysql:8.0
-    container_name: library_db
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: library_system
-      MYSQL_USER: library_user
-      MYSQL_PASSWORD: library_pass
-    ports:
-      - "3306:3306"
-    volumes:
-      - db_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: library_app
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
+    build: .
+    container_name: library-emerson
     ports:
       - "3000:3000"
-    environment:
-      DATABASE_URL: mysql://library_user:library_pass@db:3306/library_system
-
-      # NextAuth
-      NEXTAUTH_URL: http://localhost:3000
-      NEXTAUTH_SECRET: change-me-in-production
-
-      # OAuth — fill in your real credentials
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
-      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
-
-      # AI / Books API — optional
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
-      GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY:-}
-
-      NODE_ENV: production
-
-volumes:
-  db_data:
+    env_file:
+      - .env.dev
+    restart: unless-stopped

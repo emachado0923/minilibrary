@@ -1,25 +1,45 @@
 #!/bin/sh
 set -e
 
-echo "⏳ Waiting for MySQL to be ready..."
-until npx prisma db execute --stdin <<< "SELECT 1" > /dev/null 2>&1; do
-  sleep 2
-done
-echo "✅ MySQL is up"
-
-echo "⚙️  Pushing Prisma schema..."
-npx prisma db push --accept-data-loss
-echo "✅ Schema applied"
-
-# Seed only if the users table is empty
-USER_COUNT=$(npx prisma db execute --stdin <<< "SELECT COUNT(*) as c FROM users;" 2>/dev/null | grep -o '[0-9]*' | tail -1 || echo "0")
-if [ "$USER_COUNT" = "0" ]; then
-  echo "🌱 Seeding database..."
-  npx tsx prisma/seed.ts
-  echo "✅ Seed done"
-else
-  echo "ℹ️  Database already seeded, skipping"
+# ── Load .env if present (runtime env vars take precedence) ──────────────────
+if [ -f /app/.env ]; then
+  set -a
+  . /app/.env
+  set +a
 fi
 
-echo "🚀 Starting Next.js..."
-exec node server.js
+PRISMA="node /app/node_modules/prisma/build/index.js"
+TSX="/app/node_modules/.bin/tsx"
+
+# ── Wait for MySQL ────────────────────────────────────────────────────────────
+DB_HOSTPORT=$(echo "$DATABASE_URL" | sed 's|.*@||' | cut -d/ -f1)
+DB_HOST=$(echo "$DB_HOSTPORT" | cut -d: -f1)
+DB_PORT=$(echo "$DB_HOSTPORT" | cut -d: -f2)
+
+echo "Waiting for MySQL at $DB_HOST:$DB_PORT..."
+until nc -z -w 3 "$DB_HOST" "$DB_PORT" > /dev/null 2>&1; do
+  sleep 2
+done
+echo "MySQL is up"
+
+# ── Push schema ───────────────────────────────────────────────────────────────
+echo "Pushing Prisma schema..."
+$PRISMA db push --accept-data-loss --skip-generate
+echo "Schema applied"
+
+# ── Seed if empty ─────────────────────────────────────────────────────────────
+echo "Checking seed..."
+printf 'SELECT COUNT(*) FROM users;' > /tmp/check.sql
+USER_COUNT=$($PRISMA db execute --stdin < /tmp/check.sql 2>/dev/null | grep -o '[0-9]*' | head -1 || echo "0")
+
+if [ -z "$USER_COUNT" ] || [ "$USER_COUNT" = "0" ]; then
+  echo "Seeding database..."
+  $TSX /app/prisma/seed.ts
+  echo "Seed done"
+else
+  echo "Database already seeded ($USER_COUNT users), skipping"
+fi
+
+# ── Start app ─────────────────────────────────────────────────────────────────
+echo "Starting Next.js..."
+exec node /app/server.js
