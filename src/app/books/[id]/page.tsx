@@ -54,14 +54,11 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
               <CardContent className="space-y-6">
                 {book.coverUrl && book.coverUrl.trim() !== '' && (
                   <div className="flex justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={book.coverUrl}
                       alt={book.title}
                       className="max-w-xs rounded-lg shadow-md"
-                      onError={(e) => {
-                        // Hide image if it fails to load
-                        (e.target as HTMLImageElement).style.display = 'none'
-                      }}
                     />
                   </div>
                 )}
